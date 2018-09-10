@@ -1,9 +1,13 @@
+import { mat4 } from 'gl-matrix';
+
 let gl;
 let shaderProgram;
 let vertices;
 let buffer;
+let pointSize;
 const pointDimension = 1;
-let angle = 0;
+const matrix = mat4.create();
+const vertexCount = 30;
 
 const initGL = () => {
   const canvas = document.getElementById('canvas');
@@ -44,51 +48,13 @@ const createShaders = () => {
   gl.useProgram(shaderProgram);
 };
 
-const rotateZ = angle => {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  const matrix = new Float32Array([
-    cos, sin, 0, 0,
-    -sin, cos, 0, 0,
-    0, 0, 1, 0,
-    0, 0, 0, 1
-  ]);
-  const transformMatrix = gl.getUniformLocation(shaderProgram, 'transformMatrix');
-  gl.uniformMatrix4fv(transformMatrix, false, matrix);
-};
-
-const rotateY = angle => {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  const matrix = new Float32Array([
-    cos, 0, sin, 0,
-    0, 1, 0, 0,
-    -sin, 0, cos, 0,
-    0, 0, 0, 1
-  ]);
-  const transformMatrix = gl.getUniformLocation(shaderProgram, 'transformMatrix');
-  gl.uniformMatrix4fv(transformMatrix, false, matrix);
-};
-
-const rotateX = angle => {
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
-  const matrix = new Float32Array([
-    1, 0, 0, 0,
-    0, cos, sin, 0,
-    0, -sin, cos, 0,
-    0, 0, 0, 1
-  ]);
-  const transformMatrix = gl.getUniformLocation(shaderProgram, 'transformMatrix');
-  gl.uniformMatrix4fv(transformMatrix, false, matrix);
-};
-
 const createVertices = () => {
-  vertices = [
-    -0.9, -0.9, 0,
-    0.9, -0.9, 0,
-    0, 0.9, 0
-  ];
+  vertices = [];
+  for (let i = 0; i < vertexCount; i += 1) {
+    vertices.push(Math.random() * 2 - 1);
+    vertices.push(Math.random() * 2 - 1);
+    vertices.push(Math.random() * 2 - 1);
+  }
 
   buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
@@ -107,9 +73,13 @@ const createVertices = () => {
 };
 
 const draw = () => {
-  rotateX(angle += 0.01);
+  mat4.rotateX(matrix, matrix, 0.007);
+  mat4.rotateY(matrix, matrix, 0.013);
+  mat4.rotateZ(matrix, matrix, 0.01);
+  const transformMatrix = gl.getUniformLocation(shaderProgram, 'transformMatrix');
+  gl.uniformMatrix4fv(transformMatrix, false, matrix);
   gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
   requestAnimationFrame(draw);
 };
 
