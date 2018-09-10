@@ -1,0 +1,25 @@
+{
+  "name": "webgl-experiment",
+  "version": "1.0.0",
+  "description": "experiment using webgl",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "author": "Udayan Shevade",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-transform-runtime": "^7.0.0",
+    "@babel/preset-env": "^7.0.0",
+    "babel-loader": "^8.0.2",
+    "babel-preset-stage-0": "^6.24.1",
+    "webpack": "^4.17.2",
+    "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.0.0",
+    "babel-polyfill": "^6.26.0"
+  }
+}
