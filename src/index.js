@@ -1,21 +1,9 @@
 let gl;
 let shaderProgram;
 let vertices;
-const vertexCount = 5000;
 let buffer;
-let pointsGrowing = false;
-const pointDimension = 2;
-let mouseX = 0;
-let mouseY = 0;
-const proximityThreshold = 0.2;
-
-const map = (value, minSrc, maxSrc, minDist, maxDist) =>
-  ((value - minSrc) / (maxSrc - minSrc)) * (maxDist - minDist) + minDist;
-
-canvas.addEventListener('mousemove', e => {
-  mouseX = map(event.clientX, 0, canvas.width, -1, 1);
-  mouseY = map(event.clientY, 0, canvas.height, 1, -1);
-});
+const pointDimension = 1;
+let angle = 0;
 
 const initGL = () => {
   const canvas = document.getElementById('canvas');
@@ -28,8 +16,9 @@ const createShaders = () => {
   let vs = '';
   vs += 'attribute vec4 coords;';
   vs += 'attribute float pointSize;';
+  vs += 'uniform mat4 transformMatrix;';
   vs += 'void main(void) {';
-  vs += ' gl_Position = coords;';
+  vs += ' gl_Position = transformMatrix * coords;';
   vs += '  gl_PointSize = pointSize;';
   vs += '}';
 
@@ -55,20 +44,58 @@ const createShaders = () => {
   gl.useProgram(shaderProgram);
 };
 
-const createVertices = () => {
-  vertices = [];
+const rotateZ = angle => {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const matrix = new Float32Array([
+    cos, sin, 0, 0,
+    -sin, cos, 0, 0,
+    0, 0, 1, 0,
+    0, 0, 0, 1
+  ]);
+  const transformMatrix = gl.getUniformLocation(shaderProgram, 'transformMatrix');
+  gl.uniformMatrix4fv(transformMatrix, false, matrix);
+};
 
-  for (let i = 0; i < vertexCount; i += 1) {
-    vertices.push(Math.random() * 2 - 1);
-    vertices.push(Math.random() * 2 - 1);
-  }
+const rotateY = angle => {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const matrix = new Float32Array([
+    cos, 0, sin, 0,
+    0, 1, 0, 0,
+    -sin, 0, cos, 0,
+    0, 0, 0, 1
+  ]);
+  const transformMatrix = gl.getUniformLocation(shaderProgram, 'transformMatrix');
+  gl.uniformMatrix4fv(transformMatrix, false, matrix);
+};
+
+const rotateX = angle => {
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const matrix = new Float32Array([
+    1, 0, 0, 0,
+    0, cos, sin, 0,
+    0, -sin, cos, 0,
+    0, 0, 0, 1
+  ]);
+  const transformMatrix = gl.getUniformLocation(shaderProgram, 'transformMatrix');
+  gl.uniformMatrix4fv(transformMatrix, false, matrix);
+};
+
+const createVertices = () => {
+  vertices = [
+    -0.9, -0.9, 0,
+    0.9, -0.9, 0,
+    0, 0.9, 0
+  ];
 
   buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
   const coords = gl.getAttribLocation(shaderProgram, 'coords');
-  gl.vertexAttribPointer(coords, 2, gl.FLOAT, false, 0, 0);
+  gl.vertexAttribPointer(coords, 3, gl.FLOAT, false, 0, 0);
   gl.enableVertexAttribArray(coords);
   gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
@@ -76,30 +103,13 @@ const createVertices = () => {
   gl.vertexAttrib1f(pointSize, pointDimension);
 
   const color = gl.getUniformLocation(shaderProgram, 'color');
-  gl.uniform4f(color, 1, 0, 0, 1);
+  gl.uniform4f(color, 0, 0, 0, 1);
 };
 
 const draw = () => {
-  for (let i = 0; i < vertexCount * 2; i += 2) {
-    const vertexX = vertices[i];
-    const vertexY = vertices[i + 1];
-    const dx = vertexX - mouseX;
-    const dy = vertexY - mouseY;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < proximityThreshold) {
-      vertices[i] = mouseX + (dx / dist) * 0.2;
-      vertices[i + 1] = mouseY + (dy / dist) * 0.2;
-    } else {
-      vertices[i] += Math.random() * 0.01 - 0.005;
-      vertices[i + 1] += Math.random() * 0.01 - 0.005;
-    }
-  }
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
+  rotateX(angle += 0.01);
   gl.clear(gl.COLOR_BUFFER_BIT);
-  gl.drawArrays(gl.POINTS, 0, vertexCount);
-
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
   requestAnimationFrame(draw);
 };
 
