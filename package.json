@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.0.0",
-    "babel-polyfill": "^6.26.0"
+    "babel-polyfill": "^6.26.0",
+    "gl-matrix": "^2.8.1"
   }
 }
