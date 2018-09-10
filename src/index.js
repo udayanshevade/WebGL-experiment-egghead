@@ -4,9 +4,18 @@ let vertices;
 const vertexCount = 5000;
 let buffer;
 let pointsGrowing = false;
-const POINT_DIMENSION_UPPER = 5;
-const POINT_DIMENSION_LOWER = 0;
-let pointDimension = 2;
+const pointDimension = 2;
+let mouseX = 0;
+let mouseY = 0;
+const proximityThreshold = 0.2;
+
+const map = (value, minSrc, maxSrc, minDist, maxDist) =>
+  ((value - minSrc) / (maxSrc - minSrc)) * (maxDist - minDist) + minDist;
+
+canvas.addEventListener('mousemove', e => {
+  mouseX = map(event.clientX, 0, canvas.width, -1, 1);
+  mouseY = map(event.clientY, 0, canvas.height, 1, -1);
+});
 
 const initGL = () => {
   const canvas = document.getElementById('canvas');
@@ -72,25 +81,21 @@ const createVertices = () => {
 
 const draw = () => {
   for (let i = 0; i < vertexCount * 2; i += 2) {
-    vertices[i] += Math.random() * 0.01 - 0.005;
-    vertices[i + 1] += Math.random() * 0.01 - 0.005;
+    const vertexX = vertices[i];
+    const vertexY = vertices[i + 1];
+    const dx = vertexX - mouseX;
+    const dy = vertexY - mouseY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < proximityThreshold) {
+      vertices[i] = mouseX + (dx / dist) * 0.2;
+      vertices[i + 1] = mouseY + (dy / dist) * 0.2;
+    } else {
+      vertices[i] += Math.random() * 0.01 - 0.005;
+      vertices[i + 1] += Math.random() * 0.01 - 0.005;
+    }
   }
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-  if (pointDimension <= POINT_DIMENSION_LOWER) {
-    pointsGrowing = true;
-  } else if (pointDimension >= POINT_DIMENSION_UPPER) {
-    pointsGrowing = false;
-  }
-
-  if (pointsGrowing) {
-    pointDimension += Math.random() * 0.01;
-  } else {
-    pointDimension -= Math.random() * 0.01;
-  }
-
-  gl.vertexAttrib1f(pointSize, pointDimension);
 
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.POINTS, 0, vertexCount);
